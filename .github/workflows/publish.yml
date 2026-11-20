@@ -1,0 +1,71 @@
+
+name: Publish Tweak Repository
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev bzip2 apt-utils
+
+      - name: Generate repository
+        run: |
+          mkdir -p _site/debs
+
+          if [ -d debs ]; then
+            cp -a debs/. _site/debs/
+          fi
+
+          cd _site
+
+          dpkg-scanpackages --multiversion debs /dev/null > Packages
+
+          gzip -9 -c Packages > Packages.gz
+          bzip2 -9 -c Packages > Packages.bz2
+
+          apt-ftparchive \
+            -o APT::FTPArchive::Release::Origin="Tillman's Repo" \
+            -o APT::FTPArchive::Release::Label="Tillman's Repo" \
+            -o APT::FTPArchive::Release::Architectures="iphoneos-arm64e iphoneos-arm64 iphoneos-arm" \
+            -o APT::FTPArchive::Release::Description="Personal iOS Tweak Repository" \
+            release . > Release
+
+          echo "<h1>Tillman's Repo</h1><p>Personal iOS Tweak Repository</p>" > index.html
+
+          touch .nojekyll
+
+      - name: Upload repository
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: Publish repository
+        id: deployment
+        uses: actions/deploy-pages@v4
