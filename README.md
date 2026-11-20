@@ -1,2 +1,2 @@
 # repo
-Personal iOS tweak repository
+100% vibe coded personal iOS tweak repository
