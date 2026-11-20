@@ -53,13 +53,25 @@ jobs:
           apt-ftparchive \
             -o APT::FTPArchive::Release::Origin="Tillman's Repo" \
             -o APT::FTPArchive::Release::Label="Tillman's Repo" \
+            -o APT::FTPArchive::Release::Suite="stable" \
+            -o APT::FTPArchive::Release::Version="1.0" \
+            -o APT::FTPArchive::Release::Codename="ios" \
+            -o APT::FTPArchive::Release::Components="main" \
             -o APT::FTPArchive::Release::Architectures="iphoneos-arm64e iphoneos-arm64 iphoneos-arm" \
             -o APT::FTPArchive::Release::Description="Personal iOS Tweak Repository" \
-            release . > Release
+            release . > /tmp/Release
+
+          mv /tmp/Release Release
 
           echo "<h1>Tillman's Repo</h1><p>Personal iOS Tweak Repository</p>" > index.html
 
           touch .nojekyll
+
+          echo "Generated Release file:"
+          cat Release
+
+          echo "Generated package index:"
+          cat Packages
 
       - name: Upload repository
         uses: actions/upload-pages-artifact@v4
